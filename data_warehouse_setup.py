@@ -45,7 +45,7 @@ def create_tables(conn):
             customer_sk     INTEGER NOT NULL,
             product_sk      INTEGER NOT NULL,
             quantity        INTEGER NOT NULL,
-            order_amount    REAL NOT NULL,
+            amount          REAL NOT NULL,
             PRIMARY KEY (order_id, customer_sk, product_sk),
             FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk),
             FOREIGN KEY (product_sk)  REFERENCES dim_product(product_sk)
@@ -128,7 +128,7 @@ def seed_data(conn):
 
     # ---- Seed fact_order ----
     # Each tuple: (order_id, order_date, customer_id, product_id, quantity)
-    # order_amount will be derived as quantity * unit_price for simplicity
+    # amount will be derived as quantity * unit_price for simplicity
     raw_orders = [
         (1001, "2024-04-01", 101, 201, 1),
         (1001, "2024-04-01", 101, 203, 4),
@@ -153,7 +153,7 @@ def seed_data(conn):
     ]
 
     fact_rows = []
-    # Build fact rows with surrogate keys and computed order_amount
+    # Build fact rows with surrogate keys and computed amount
     for order_id, order_date, customer_id, product_id, quantity in raw_orders:
         customer_sk = customer_map[customer_id]
         product_sk = product_map[product_id]
@@ -163,14 +163,14 @@ def seed_data(conn):
             (product_sk,)
         )
         unit_price = cur.fetchone()[0]
-        order_amount = quantity * unit_price
+        amount = quantity * unit_price
         fact_rows.append(
-            (order_id, order_date, customer_sk, product_sk, quantity, order_amount)
+            (order_id, order_date, customer_sk, product_sk, quantity, amount)
         )
 
     cur.executemany("""
         INSERT INTO fact_order (
-            order_id, order_date, customer_sk, product_sk, quantity, order_amount
+            order_id, order_date, customer_sk, product_sk, quantity, amount
         )
         VALUES (?, ?, ?, ?, ?, ?);
     """, fact_rows)
