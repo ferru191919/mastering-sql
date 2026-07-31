@@ -32,4 +32,7 @@ FROM dim_product) AS ranked_products
 WHERE Expensive <= 3;
 
 
--- Exercise: What percent of total revenue does each product contribute?
+-- Exercise: Show each order line with product total and global total
+SELECT order_id, product_sk, amount AS order_total_per_product, 
+        SUM(amount) OVER (PARTITION BY order_id) AS global_order_total
+FROM fact_order;
