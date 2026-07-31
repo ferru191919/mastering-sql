@@ -2,7 +2,7 @@
 
 import sqlite3
 
-DB_PATH = "order_dw.db"
+DB_PATH = "data-warehouse.db"
 
 def create_tables(conn):
     cur = conn.cursor()
