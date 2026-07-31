@@ -30,3 +30,6 @@ SELECT * FROM
          ROW_NUMBER() OVER (PARTITION BY category ORDER BY unit_price DESC) AS Expensive
 FROM dim_product) AS ranked_products
 WHERE Expensive <= 3;
+
+
+-- Exercise: What percent of total revenue does each product contribute?
