@@ -2,7 +2,7 @@
 -- Subqueries are great when you need one extra calculation or filter “inside” your main query.
 
 
--- Subquery in FROM (top customers per spending)
+-- Subquery in FROM (top customers by spend)
 SELECT
     c.customer_name,
     c.country,
