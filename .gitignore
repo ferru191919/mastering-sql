@@ -1,3 +1,3 @@
 .venv/
 order_dw.db
-data-warehouse.db
+order-warehouse.db
