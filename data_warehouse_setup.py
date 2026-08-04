@@ -2,10 +2,14 @@
 
 import os
 import psycopg2
+from dotenv import load_dotenv
 from datetime import datetime
 from decimal import Decimal
 
-# Read DB config from environment variables (safe for GitHub)
+# Load variables from .env into os.environ (if .env exists)
+load_dotenv()
+
+# os.getenv reads DB config variables from os.environ (safe for GitHub)
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
     "dbname": os.getenv("DB_NAME", "data_warehouse"),
