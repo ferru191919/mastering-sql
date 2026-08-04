@@ -18,4 +18,4 @@ SELECT
     SUM(quantity) AS items_number
 FROM fact_order
 GROUP BY order_id, product_sk
-HAVING items_number > 3;
+HAVING SUM(quantity) > 3;
