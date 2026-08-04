@@ -1,9 +1,28 @@
-## RUN THIS TO SET UP DATA WAREHOUSE ##
+## RUN THIS TO SET UP DATA WAREHOUSE IN POSTGRES (ENV-BASED CONFIG) ##
 
-import sqlite3
+import os
+import psycopg2
 from datetime import datetime
+from decimal import Decimal
 
-DB_PATH = "order-warehouse.db"
+# Read DB config from environment variables (safe for GitHub)
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "dbname": os.getenv("DB_NAME", "data_warehouse"),
+    "user": os.getenv("DB_USER", "your_user"),
+    "password": os.getenv("DB_PASSWORD", "your_password"),
+    "port": int(os.getenv("DB_PORT", "5432")),
+}
+
+def get_connection():
+    conn = psycopg2.connect(
+        host=DB_CONFIG["host"],
+        dbname=DB_CONFIG["dbname"],
+        user=DB_CONFIG["user"],
+        password=DB_CONFIG["password"],
+        port=DB_CONFIG["port"],
+    )
+    return conn
 
 def create_tables(conn):
     cur = conn.cursor()
@@ -16,14 +35,12 @@ def create_tables(conn):
     # Dimension: Customer (surrogate PK)
     cur.execute("""
         CREATE TABLE dim_customer (
-            customer_sk         INTEGER PRIMARY KEY,
+            customer_sk         SERIAL PRIMARY KEY,
             customer_id         INTEGER NOT NULL,
             customer_name       TEXT NOT NULL,
             customer_email      TEXT,
             country             TEXT NOT NULL,
             signup_date         DATE,
-
-            -- NEW COLUMNS (added, existing ones unchanged)
             city                TEXT,
             segment             TEXT
         );
@@ -32,22 +49,19 @@ def create_tables(conn):
     # Dimension: Product (surrogate PK)
     cur.execute("""
         CREATE TABLE dim_product (
-            product_sk          INTEGER PRIMARY KEY,
+            product_sk          SERIAL PRIMARY KEY,
             product_id          INTEGER NOT NULL,
             product_name        TEXT NOT NULL,
             category            TEXT NOT NULL,
-            unit_price          REAL NOT NULL,
-
-            -- NEW COLUMNS (added, existing ones unchanged)
+            unit_price          NUMERIC(10,2) NOT NULL,
             brand               TEXT,
             sub_category        TEXT,
-            is_discontinued     INTEGER DEFAULT 0 -- 0 = active, 1 = discontinued
+            is_discontinued     INTEGER DEFAULT 0
         );
     """)
 
     # Fact: Order
-    # Grain: one row per product per customer
-    # Primary key: composite of (order_id, customer_key, product_key)
+    # Grain: row per customer per product --> each row represents an order line-item
     cur.execute("""
         CREATE TABLE fact_order (
             order_id        INTEGER NOT NULL,
@@ -55,14 +69,11 @@ def create_tables(conn):
             customer_sk     INTEGER NOT NULL,
             product_sk      INTEGER NOT NULL,
             quantity        INTEGER NOT NULL,
-            amount          REAL NOT NULL,
-
-            -- NEW COLUMNS (added, existing ones unchanged)
+            amount          NUMERIC(10,2) NOT NULL,
             order_year      INTEGER,
-            order_month     TEXT,     -- e.g. '2024-04'
-            discount_amount REAL,
-            net_amount      REAL,
-
+            order_month     TEXT,
+            discount_amount NUMERIC(10,2),
+            net_amount      NUMERIC(10,2),
             PRIMARY KEY (order_id, customer_sk, product_sk),
             FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk),
             FOREIGN KEY (product_sk)  REFERENCES dim_product(product_sk)
@@ -70,12 +81,12 @@ def create_tables(conn):
     """)
 
     conn.commit()
+    cur.close()
 
 def seed_data(conn):
     cur = conn.cursor()
 
     # ---- Seed dim_customer ----
-    # Added city + segment
     customers = [
         (101, "Alice Rossi",        "alice.rossi@example.com",       "Italy",    "2024-01-10", "Cagliari",   "Retail"),
         (102, "Marco Bianchi",      "marco.bianchi@example.com",     "Italy",    "2024-01-15", "Rome",       "Retail"),
@@ -98,6 +109,7 @@ def seed_data(conn):
         (119, "Marta Rossi",        "marta.rossi@example.com",       "Italy",    "2024-05-05", "Florence",   "Retail"),
         (120, "David Thompson",     "david.thompson@example.com",    "USA",      "2024-05-10", "Chicago",    "Online"),
     ]
+
     cur.executemany("""
         INSERT INTO dim_customer (
             customer_id,
@@ -108,11 +120,10 @@ def seed_data(conn):
             city,
             segment
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?);
+        VALUES (%s, %s, %s, %s, %s, %s, %s);
     """, customers)
 
     # ---- Seed dim_product ----
-    # Added brand, sub_category, is_discontinued
     products = [
         (201, "Tennis Racket Pro",          "Sports",     150.0, "Wilson",   "Racket",       0),
         (202, "Tennis Racket Basic",        "Sports",      90.0, "Babolat",  "Racket",       0),
@@ -135,6 +146,7 @@ def seed_data(conn):
         (219, "Resistance Band Set",        "Recovery",    28.0, "Decathlon","Recovery",     0),
         (220, "Massage Ball",               "Recovery",    15.0, "Generic",  "Recovery",     0),
     ]
+
     cur.executemany("""
         INSERT INTO dim_product (
             product_id,
@@ -145,21 +157,17 @@ def seed_data(conn):
             sub_category,
             is_discontinued
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?);
+        VALUES (%s, %s, %s, %s, %s, %s, %s);
     """, products)
 
     # ---- Fetch surrogate keys to use in fact table ----
-    # Map customer_id -> customer_sk
     cur.execute("SELECT customer_sk, customer_id FROM dim_customer;")
     customer_map = {row[1]: row[0] for row in cur.fetchall()}
 
-    # Map product_id -> product_sk
     cur.execute("SELECT product_sk, product_id FROM dim_product;")
     product_map = {row[1]: row[0] for row in cur.fetchall()}
 
     # ---- Seed fact_order ----
-    # Each tuple: (order_id, order_date, customer_id, product_id, quantity, discount_amount)
-    # amount will be derived as quantity * unit_price; net_amount = amount - discount_amount
     raw_orders = [
         (1001, "2024-04-01", 101, 201, 1,  0.0),
         (1001, "2024-04-01", 101, 203, 4,  0.0),
@@ -188,17 +196,21 @@ def seed_data(conn):
         customer_sk = customer_map[customer_id]
         product_sk = product_map[product_id]
 
-        # lookup unit_price
         cur.execute(
-            "SELECT unit_price FROM dim_product WHERE product_sk = ?",
+            "SELECT unit_price FROM dim_product WHERE product_sk = %s;",
             (product_sk,)
         )
         unit_price = cur.fetchone()[0]
 
-        amount = quantity * unit_price
+        from decimal import Decimal
+
+        # unit_price is likely already a Decimal from psycopg2; if not, we force it:
+        unit_price = Decimal(str(unit_price))
+
+        amount = unit_price * Decimal(quantity)
+        discount_amount = Decimal(str(discount_amount))
         net_amount = amount - discount_amount
 
-        # derive year and month
         dt = datetime.strptime(order_date_str, "%Y-%m-%d")
         order_year = dt.year
         order_month = f"{dt.year}-{dt.month:02d}"
@@ -231,17 +243,18 @@ def seed_data(conn):
             discount_amount,
             net_amount
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """, fact_rows)
 
     conn.commit()
+    cur.close()
 
 def main():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     try:
         create_tables(conn)
         seed_data(conn)
-        print("Data warehouse setup complete.")
+        print("PostgreSQL data warehouse setup complete.")
     finally:
         conn.close()
 
