@@ -1,5 +1,7 @@
 ## RUN THIS TO SET UP DATA WAREHOUSE IN POSTGRES (ENV-BASED CONFIG) ##
 
+## Before you need to create a .env file (see example in folder)
+
 import os
 import psycopg2
 from dotenv import load_dotenv
