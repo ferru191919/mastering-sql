@@ -39,9 +39,9 @@ From there (run in 'psql'), create a database and user that this project will us
 Example SQL:
 
 ```psql
-CREATE DATABASE data_warehouse;
-CREATE USER myapp_user WITH PASSWORD 'your_strong_password';
-GRANT ALL PRIVILEGES ON DATABASE data_warehouse TO myapp_user;
+CREATE DATABASE 'your_database_name_here';
+CREATE USER 'your_database_user_here' WITH PASSWORD 'your_database_password_here';
+GRANT ALL PRIVILEGES ON DATABASE 'your_database_name_here' TO 'your_database_user_here';
 ```
 
 You can change the database name, user, and password if you prefer; just keep the `.env` file in sync.
@@ -55,10 +55,10 @@ For local development, those variables come from a `.env` file in the project ro
 
    ```env
    DB_HOST=localhost
-   DB_NAME=data_warehouse
-   DB_USER=myapp_user
-   DB_PASSWORD=your_strong_password
    DB_PORT=5432
+   DB_NAME=your_database_name_here
+   DB_USER=your_database_user_here
+   DB_PASSWORD=your_database_password_here
    ```
 
 2. Ensure `.env` is listed in `.gitignore` so your secrets are not pushed to Git.
