@@ -42,7 +42,7 @@ def create_tables(conn):
     cur.execute("""
         CREATE TABLE dim_customer (
             customer_sk         SERIAL PRIMARY KEY,
-            customer_id         INTEGER NOT NULL,
+            customer_id         INTEGER NOT NULL UNIQUE,
             customer_name       TEXT NOT NULL,
             customer_email      TEXT,
             country             TEXT NOT NULL,
@@ -56,7 +56,7 @@ def create_tables(conn):
     cur.execute("""
         CREATE TABLE dim_product (
             product_sk          SERIAL PRIMARY KEY,
-            product_id          INTEGER NOT NULL,
+            product_id          INTEGER NOT NULL UNIQUE,
             product_name        TEXT NOT NULL,
             category            TEXT NOT NULL,
             unit_price          NUMERIC(10,2) NOT NULL,
@@ -168,14 +168,13 @@ def seed_data(conn):
 
     # ---- Fetch surrogate keys to use in fact table ----
     cur.execute("SELECT customer_sk, customer_id FROM dim_customer;")
-    customer_map = {row[1]: row[0] for row in cur.fetchall()}
+    customer_map = {row[1]: row[0] for row in cur.fetchall()}  # takes all rows returned by the immediately preceding SELECT and returns them as a Python list of tuples
 
     cur.execute("SELECT product_sk, product_id FROM dim_product;")
     product_map = {row[1]: row[0] for row in cur.fetchall()}
 
         # ---- Seed fact_order ----
     raw_orders = [
-        # Existing April orders
         (1001, "2024-04-01", 101, 201, 1,  0.0),
         (1001, "2024-04-01", 101, 203, 4,  0.0),
         (1002, "2024-04-02", 102, 202, 1,  5.0),
@@ -196,59 +195,37 @@ def seed_data(conn):
         (1013, "2024-04-13", 113, 201, 1,  0.0),
         (1013, "2024-04-13", 113, 203, 2,  0.0),
         (1014, "2024-04-14", 114, 218, 1,  0.0),
-
-        # Additional January orders
         (1015, "2024-01-08", 115, 202, 1,  0.0),
         (1015, "2024-01-08", 115, 205, 2,  0.0),
-
-        # Additional February orders
         (1016, "2024-02-12", 116, 211, 1,  5.0),
         (1017, "2024-02-20", 117, 206, 2,  6.0),
-
-        # Additional March orders
         (1018, "2024-03-05", 118, 208, 3,  0.0),
         (1018, "2024-03-05", 118, 209, 5,  0.0),
         (1019, "2024-03-18", 119, 213, 1, 10.0),
-
-        # Additional May orders
         (1020, "2024-05-03", 120, 207, 1,  0.0),
         (1020, "2024-05-03", 120, 210, 1,  0.0),
         (1021, "2024-05-17", 101, 219, 1,  3.0),
-
-        # Additional June orders
         (1022, "2024-06-04", 102, 201, 1, 15.0),
         (1022, "2024-06-04", 102, 204, 1,  0.0),
         (1023, "2024-06-21", 103, 214, 2,  5.0),
-
-        # Additional July orders
         (1024, "2024-07-09", 104, 216, 1,  8.0),
         (1025, "2024-07-25", 105, 217, 3,  0.0),
-
-        # Additional August orders
         (1026, "2024-08-06", 106, 220, 2,  2.0),
         (1027, "2024-08-19", 107, 203, 6,  0.0),
-
-        # Additional September orders
         (1028, "2024-09-02", 108, 212, 1,  0.0),
         (1029, "2024-09-23", 109, 218, 1,  4.0),
-
-        # Additional October orders
         (1030, "2024-10-11", 110, 215, 2,  5.0),
         (1031, "2024-10-28", 111, 208, 4,  3.0),
-
-        # Additional November orders
         (1032, "2024-11-07", 112, 206, 1,  5.0),
         (1033, "2024-11-18", 113, 211, 1,  0.0),
-
-        # Additional December orders
         (1034, "2024-12-05", 114, 213, 1, 20.0),
         (1034, "2024-12-05", 114, 217, 2,  0.0),
         (1035, "2024-12-19", 115, 219, 1,  0.0),
     ]
 
     fact_rows = []
-    for order_id, order_date_str, customer_id, product_id, quantity, discount_amount in raw_orders:
-        customer_sk = customer_map[customer_id]
+    for order_id, order_date, customer_id, product_id, quantity, discount_amount in raw_orders:
+        customer_sk = customer_map[customer_id]  # 
         product_sk = product_map[product_id]
 
         cur.execute(
@@ -257,23 +234,23 @@ def seed_data(conn):
         )
         unit_price = cur.fetchone()[0]
 
-        from decimal import Decimal
-
         # unit_price is likely already a Decimal from psycopg2; if not, we force it:
         unit_price = Decimal(str(unit_price))
 
+        # calulating amount and net_amount
         amount = unit_price * Decimal(quantity)
         discount_amount = Decimal(str(discount_amount))
         net_amount = amount - discount_amount
 
-        dt = datetime.strptime(order_date_str, "%Y-%m-%d")
+        # converting order_date format
+        dt = datetime.strptime(order_date, "%Y-%m-%d")
         order_year = dt.year
         order_month = f"{dt.year}-{dt.month:02d}"
 
         fact_rows.append(
             (
                 order_id,
-                order_date_str,
+                order_date,
                 customer_sk,
                 product_sk,
                 quantity,
