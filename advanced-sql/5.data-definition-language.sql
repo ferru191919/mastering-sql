@@ -129,3 +129,42 @@ SET unit_price = 160.00
 WHERE product_id = 201;
 
 ROLLBACK;   -- ROLLBACK is the “undo” command for everything done after BEGIN and before COMMIT.
+
+---------------------------------
+
+-- PARTITIONING = dividing the original, big table into smaller tables.
+
+CREATE TABLE fact_order IF NOT EXISTS(
+    order_id        INTEGER NOT NULL,
+    order_date      DATE NOT NULL,
+    customer_sk     INTEGER NOT NULL,
+    product_sk      INTEGER NOT NULL,
+    quantity        INTEGER NOT NULL,
+    amount          NUMERIC(10,2) NOT NULL,
+    order_year      INTEGER,
+    order_month     TEXT,
+    discount_amount NUMERIC(10,2),
+    net_amount      NUMERIC(10,2),
+    PRIMARY KEY (order_id, customer_sk, product_sk, order_date),
+    FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk),
+    FOREIGN KEY (product_sk) REFERENCES dim_product(product_sk)
+)
+PARTITION BY RANGE (order_date);    -- partitioned by date ranges
+
+-- examples:
+CREATE TABLE fact_order_2024_12
+PARTITION OF fact_order
+FOR VALUES FROM ('2024-12-01') TO ('2025-01-01');
+
+CREATE TABLE fact_order_2025_01
+PARTITION OF fact_order
+FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+
+-- Main benefits:
+--     - Faster date-filtered queries: if you request only December 2024 orders, PostgreSQL can skip partitions for all other months. This is called partition pruning.
+--     - Easier cleanup: removing old data can mean dropping one old partition instead of running a slow DELETE across millions of rows; this also avoids the cleanup overhead associated with large deletes.
+--     - Smaller indexes: each partition can have smaller indexes, which are often easier to keep in memory and maintain.
+--     - Data lifecycle management: recent orders can stay on faster storage while old historical partitions can be archived or moved to less expensive storage.
+
+-- When not to use it:
+-- Do not partition merely because a table exists. Your current seeded fact_order has only a few dozen rows, so partitioning would add complexity without a useful performance gain.
