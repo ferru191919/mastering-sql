@@ -1,36 +1,46 @@
 -- Included learning topics: aggregations, joins, window functions, case statements,
 --                           subqueries, CTEs.
 
--- Exercise 1: # Find the top 3 customers by total net revenue.
-SELECT
-    o.customer_sk,
-    c.customer_name, 
-    c.country,
-    SUM(net_amount) AS per_customer_net_revenue
-FROM fact_order AS o
-JOIN dim_customer AS c
-ON c.customer_sk = o.customer_sk
-GROUP BY o.customer_sk, c.customer_name, c.country
-ORDER BY per_customer_net_revenue DESC
+
+-- Exercise 1: # Find the top 3 customers by total net revenue --
+
+-- with Window Function
+SELECT DISTINCT
+    customer_sk, 
+    SUM(net_amount) OVER (PARTITION BY customer_sk) AS tot_net_amount     
+FROM 
+    fact_order
+ORDER BY tot_net_amount DESC
 LIMIT 3;
 
 
--- Exercise 2: # For each country, find the top 3 customers by total net revenue.
-SELECT * 
-FROM
-    (
+-- w/o Window Function
+SELECT DISTINCT
+    customer_sk, 
+    SUM(net_amount) AS tot_net_amount
+FROM 
+    fact_order
+GROUP BY customer_sk
+ORDER BY tot_net_amount DESC
+LIMIT 3;
+
+
+-- Exercise 2: # For each country, find the top 2 customers by total net revenue --
+SELECT *
+FROM(
     SELECT
-        o.customer_sk,
-        c.customer_name, 
+        o.customer_sk, 
         c.country,
-        SUM(net_amount) AS per_customer_net_revenue,
-        ROW_NUMBER() OVER (PARTITION BY c.country ORDER BY SUM(net_amount) DESC) AS top_customer
-    FROM fact_order AS o
-    JOIN dim_customer AS c
-    ON c.customer_sk = o.customer_sk
-    GROUP BY o.customer_sk, c.customer_name, c.country
-    ) AS revenue
-WHERE top_customer <= 3;
+        SUM(o.net_amount) AS tot_net_amount,
+        ROW_NUMBER() OVER (PARTITION BY c.country ORDER BY SUM(o.net_amount) DESC) AS top_customer    
+        -- Window Functions don't read aggregated values (e.g. tot_net_amount)
+    FROM 
+        fact_order o 
+    JOIN
+        dim_customer c ON c.customer_sk = o.customer_sk
+    GROUP BY o.customer_sk, c.country
+    )
+WHERE top_customer < 3;
 
 
 -- Exercise 3: Identify customers whose total revenue is greater than the average revenue
@@ -49,8 +59,8 @@ WITH customer_revenue AS (
 avg_amount AS (
     SELECT
         country,
-        AVG(per_customer_revenue) AS avg_revenue
-    FROM customer_revenue
+        AVG(per_customer_revenue) AS avg_revenue    -- I'm using previous CTE
+    FROM customer_revenue       
     GROUP BY country
 )
 SELECT
@@ -101,7 +111,8 @@ WITH customer_revenue AS (
     JOIN dim_customer c
     ON o.customer_sk = c.customer_sk
     GROUP BY c.customer_sk, c.customer_name, c.country
-) -- I'm reusing previous CTEs
+) -- I could create a VIEW to reuse this piece of logic, instead of copy pasting every time
+  -- (but it's outside of learning scope now)
 SELECT 
     customer_sk,
     per_customer_net_revenue,
@@ -186,7 +197,3 @@ JOIN nation_revenue AS nr
     ON cr.country = nr.country
 WHERE cr.total_customer_revenue / nr.total_country_revenue * 100.0 > 10
 ORDER BY contribution_percentage DESC;
-
-    
-
-
