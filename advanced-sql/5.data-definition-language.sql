@@ -2,7 +2,7 @@
 --                                  indexes, views, and constraints (e.g. CREATE TABLE, ALTER TABLE).
 
 
--- CREATE TABLE: you can create a new table with columns. It’ll be empty of values:
+-- CREATE TABLE: you can create a new table with columns. It'll be empty of values:
 CREATE TABLE dim_date (
     date_sk      INTEGER,    -- name of column, and value type
     full_date    DATE,                  
@@ -18,7 +18,7 @@ CREATE TABLE dim_date (
 --                  - UNIQUE
 --                  - FOREIGN KEY
 
-CREATE TABLE fact_order IF NOT EXISTS (
+CREATE TABLE fact_order IF NOT EXISTS (    
     order_id        INTEGER NOT NULL,
     order_date      DATE NOT NULL,
     customer_sk     INTEGER NOT NULL,
@@ -33,7 +33,6 @@ CREATE TABLE fact_order IF NOT EXISTS (
     FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk),
     FOREIGN KEY (product_sk)  REFERENCES dim_product(product_sk)
 );
-)
 
 -- With “ALTER TABLE”, we can change the structure of a column:
 ALTER TABLE  dim_date
@@ -54,6 +53,22 @@ DROP TABLE dim_date;
 
 -------------------------------------------------------------------
 
+-- TEMPRARY TABLES:
+#
+# You can also create temporary tables that
+#       - last only until the end of the session;
+#       - materialize intermediate results (store data) --> Fast reading;
+#       - support DML (INSERT, UPDATE, MERGE) --> No DELETE.
+#
+# Syntax:
+#           CREATE TEMP TABLE table_name AS
+#           SELECT ...
+#           FROM ...
+#           WHERE ...
+# 
+
+-------------------------------------------------------------------
+
 -- CREATE VIEW for saved, reusable query logic: 
 CREATE VIEW customer_revenue_summary AS
 SELECT
@@ -70,7 +85,7 @@ GROUP BY
     c.customer_name,
     c.country;
 
--- Now, just need to query the view just as you would query a table:
+-- Now, just need to reference the view just as you would query a table:
 SELECT
     customer_name,
     country,
@@ -81,6 +96,22 @@ ORDER BY total_revenue DESC;
 
 -- ALTER VIEW and DROP VIEW work the same as with tables
 DROP VIEW customer_revenue_summary;
+
+-------------------------------------------------------------------
+
+-- TEMPRARY VIEWS:
+#
+# You can also create temporary views that
+#       - last only until the end of the session;
+#       - do NOT materialize intermediate results (NO data kept);
+#       - do NOT support DML;
+#
+# Syntax:
+#           CREATE TEMP VIEW table_name AS
+#           SELECT ...
+#           FROM ...
+#           WHERE ...
+# 
 
 ---------------------------------------------------------------
 
