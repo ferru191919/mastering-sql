@@ -3,19 +3,27 @@
 --      10 = 20      → FALSE
 --      10 = NULL    → UNKNOWN
 
+-- To find a NULL value, you can use WHERE...IS NULL:
+SELECT
+    customer_id,
+    customer_name
+FROM dim_customer
+WHERE customer_email IS NULL;
+
+
 -- NULL HANDLING = functions that allows to handle NULL values
---                    - COALESCE(value1, 0): If value1 has a value, use it. Otherwise use 0.
+--                    - COALESCE(value1, 0): If value1 has a value, use it. If value1 is NULL, replace it with 0.
 --                    - NULLIF(value1, value2): If the two values are equal, return NULL. Otherwise return value1.
 
 -- COALESCE():
 SELECT
     customer_name,
-    COALESCE(city, 'Unknown') AS location  -- if city has a value, use it. Otherwise use 'Unknown'
+    COALESCE(city, 'Unknown') AS location  -- if city has a value, use it. If it's NULL, then replace it with 'Unknown'
 FROM dim_customer;
 
 SELECT
     customer_name,
-    COALESCE(city, country, 'Unknown') AS location -- if city has a value, use it. Otherwise check for and use country value. If not available, use 'Unknown'
+    COALESCE(city, country, 'Unknown') AS location -- if city has a value, use it. If city is NULL, check for and use country value. If it's NULL too, then replace it with 'Unknown'
 FROM dim_customer;
 
 
