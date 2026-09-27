@@ -16,7 +16,7 @@ SELECT
     category,
     unit_price
 FROM dim_product
-WHERE p_category = p_category;  -- at runtime, you can assign whatever value to p_category (e.g. 'Sports', 'Nutrition', etc...)
+WHERE category = p_category;  -- at runtime, you can assign whatever value to p_category (e.g. 'Sports', 'Nutrition', etc...)
 
 --------------------------------
 
