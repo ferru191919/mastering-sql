@@ -1,6 +1,12 @@
 -- DML (Data Manipulation Language) = used to manipulate the data stored in those database 
 --                                    objects (e.g. INSERT, RETRIEVE, MODIFY, etc...).
 
+
+-- SAFETY RULE --
+--
+-- Remember to use BEGIN TRANSACTION!
+
+
 -- After creating the table, we need to add records to the table:
 INSERT INTO fact_order (order_id, order_date, customer_sk, product_sk, quantity, amount)
 VALUES 

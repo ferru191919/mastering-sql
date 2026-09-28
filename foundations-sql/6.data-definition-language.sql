@@ -2,6 +2,36 @@
 --                                  indexes, views, and constraints (e.g. CREATE TABLE, ALTER TABLE).
 
 
+-- SAFETY RULES --
+--
+-- When you commit DB changes, there's no undo command.
+-- Therefore, it's important to know some safety rules before editing a DB.
+
+--
+BEGIN TRANSACTION;   -- A transaction creates a safe area where you can test changes 
+                     -- before deciding whether to keep them.
+UPDATE dim_customer
+SET city = 'Venice'
+WHERE customer_id = 999;
+
+ROLLBACK;           -- ROLLBACK cancels everything done after BEGIN TRANSACTION.
+--
+
+-- Instead, if you want to commit changes:
+--
+BEGIN TRANSACTION;
+
+UPDATE dim_customer
+SET city = 'Venice'
+WHERE customer_id = 999;
+
+COMMIT;         -- commit changes.
+--
+
+------------------------------------------
+
+-- Now, ket's start with DDL commands:
+--
 -- CREATE TABLE: you can create a new table with columns. It'll be empty of values:
 CREATE TABLE dim_date (
     date_sk      INTEGER,    -- name of column, and value type
@@ -132,34 +162,6 @@ ON fact_order (customer_sk);
 --      Trade-off: indexes improve many reads, but consume storage and add work to INSERT, 
 --                 UPDATE, and DELETE, because the index must also be updated. 
 --                 Create indexes based on actual query patterns, not on every column.
-
-
--- How to know what kind of scanning does PostgreSQL apply?
-EXPLAIN     -- It does not run the SELECT
-SELECT *
-FROM fact_order
-WHERE customer_sk = 12;
-
-EXPLAIN ANALYZE     -- This actually runs the query
-SELECT *
-FROM fact_order
-WHERE customer_sk = 12;
-
--- Safety rule:
--- Use plain EXPLAIN freely for any statement. Be cautious with EXPLAIN ANALYZE on INSERT, 
--- UPDATE, or DELETE, because it executes the statement and therefore can modify data. 
-
--- For a safe test of a data-changing statement, place it in a transaction and finish 
--- with ROLLBACK:
-
-BEGIN;
-
-EXPLAIN ANALYZE
-UPDATE dim_product
-SET unit_price = 160.00
-WHERE product_id = 201;
-
-ROLLBACK;   -- ROLLBACK is the “undo” command for everything done after BEGIN and before COMMIT.
 
 ---------------------------------
 
