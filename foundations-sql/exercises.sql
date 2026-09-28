@@ -509,3 +509,148 @@ SELECT
 FROM dim_product
 
 ORDER BY type, name; 
+
+
+/*
+============================================================
+SECTION 7 — DATA MANIPULATION LANGUAGE
+============================================================
+
+IMPORTANT:
+Use temporary/practice data for these exercises.
+Do not accidentally change records you want to preserve.
+============================================================
+*/
+
+
+-- ---------------------------------------------------------
+-- EXERCISE 18 — INSERT
+-- Difficulty: Easy
+--
+-- Insert a new customer into dim_customer.
+--
+-- Use:
+--
+-- customer_id:       999
+-- customer_name:     Practice Customer
+-- customer_email:    practice@example.com
+-- country:           Italy
+-- signup_date:       2024-06-01
+-- city:              Bologna
+-- segment:           Retail
+--
+-- After inserting the customer, write a SELECT query underneath
+-- your INSERT statement to verify that the record exists.
+
+BEGIN TRANSACTION;
+
+INSERT INTO dim_customer (customer_id, customer_name, customer_email, country, signup_date, city, segment)
+VALUES
+    (999, 'Practice Customer', 'ractice@example.com', 'Italy', '2024-06-01', 'Bologna', 'Retail');
+
+SELECT *
+FROM dim_customer
+WHERE customer_id = 999;
+
+ROLLBACK;
+
+-- ---------------------------------------------------------
+-- EXERCISE 19 — UPDATE
+-- Difficulty: Easy
+--
+-- Update the practice customer created in Exercise 18.
+--
+-- Change:
+--
+-- city
+--
+-- from Bologna to Venice.
+--
+-- Also change:
+--
+-- segment
+--
+-- from Retail to Online.
+--
+-- Then query the customer to verify the result.
+
+BEGIN TRANSACTION;
+
+UPDATE dim_customer
+SET city = 'Venice',
+    segment = 'Online'
+WHERE customer_id = 999;
+
+SELECT *
+FROM dim_customer
+WHERE customer_id = 999;
+
+ROLLBACK;
+
+-- ---------------------------------------------------------
+-- EXERCISE 20 — DELETE
+-- Difficulty: Easy
+--
+-- Delete the practice customer created in Exercise 18.
+--
+-- After deleting it, write a SELECT statement that confirms the
+-- record no longer exists.
+
+BEGIN TRANSACTION;
+
+DELETE FROM dim_customer
+WHERE customer_id = 999;
+
+SELECT *
+FROM dim_customer
+WHERE customer_id = 999;
+
+ROLLBACK;
+
+
+
+/*
+============================================================
+SECTION 8 — DATA DEFINITION LANGUAGE
+============================================================
+*/
+
+
+-- ---------------------------------------------------------
+-- EXERCISE 21 — Create a table
+-- Difficulty: Intermediate
+--
+-- Create a table called:
+--
+-- product_reviews
+--
+-- It should contain:
+--
+-- review_id
+--     automatically generated primary key
+--
+-- product_sk
+--     integer
+--     required
+--     references dim_product(product_sk)
+--
+-- rating
+--     integer
+--     required
+--
+-- review_text
+--     text
+--     optional
+--
+-- review_date
+--     date
+--     required
+--
+-- Add a constraint so rating can only contain values from
+-- 1 to 5.
+
+BEGIN TRANSACTION;
+
+CREATE TABLE product_reviews(
+    
+)
