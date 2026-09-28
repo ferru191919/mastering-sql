@@ -5,41 +5,31 @@
 -- SAFETY RULES --
 --
 -- When you commit DB changes, there's no undo command.
--- Therefore, it's important to know some safety rules before editing a DB.
+-- Therefore, it's important to know some safety rules before altering your DB.
+-- Include all your DDL queries within BEGIN TRANSACTION and ROLLBACK commands.
 
---
 BEGIN TRANSACTION;   -- A transaction creates a safe area where you can test changes 
                      -- before deciding whether to keep them.
-UPDATE dim_customer
-SET city = 'Venice'
-WHERE customer_id = 999;
+-- Your DDL query ...
 
 ROLLBACK;           -- ROLLBACK cancels everything done after BEGIN TRANSACTION.
---
-
--- Instead, if you want to commit changes:
---
-BEGIN TRANSACTION;
-
-UPDATE dim_customer
-SET city = 'Venice'
-WHERE customer_id = 999;
-
-COMMIT;         -- commit changes.
---
 
 ------------------------------------------
 
 -- Now, ket's start with DDL commands:
 --
 -- CREATE TABLE: you can create a new table with columns. It'll be empty of values:
+
+BEGIN TRANSACTION;
+
 CREATE TABLE dim_date (
-    date_sk      INTEGER,    -- name of column, and value type
-    full_date    DATE,                  
-    year         INTEGER,
-    month        INTEGER,            
-    month_name   VARCHAR(20),
-    quarter      INTEGER    
+    date_sk       INTEGER,    -- name of column, and value type
+    full_date     DATE,                  
+    year          INTEGER,
+    month         INTEGER,            
+    month_name    VARCHAR(20),
+    quarter       INTEGER,
+    verified_date BOOLEAN DEFAULT TRUE    
 );
 
 -- When creating the table, we need to define CONSTRAINTS:
@@ -47,13 +37,14 @@ CREATE TABLE dim_date (
 --                  - NOT NULL
 --                  - UNIQUE
 --                  - FOREIGN KEY
+--                  - CHECK()
 
 CREATE TABLE fact_order IF NOT EXISTS (    
-    order_id        INTEGER NOT NULL,
+    order_id        INTEGER GENERATED ALWAYS AS IDENTITY, -- auto generated
     order_date      DATE NOT NULL,
     customer_sk     INTEGER NOT NULL,
     product_sk      INTEGER NOT NULL,
-    quantity        INTEGER NOT NULL,
+    quantity        INTEGER NOT NULL CHECK (quantity BETWEEN 0 AND 99),
     amount          NUMERIC(10,2) NOT NULL,
     order_year      INTEGER,
     order_month     TEXT,
@@ -66,13 +57,13 @@ CREATE TABLE fact_order IF NOT EXISTS (
 
 -- With “ALTER TABLE”, we can change the structure of a column:
 ALTER TABLE  dim_date
-ADD  year_name  VARCHAR(20);        					-- to add a column
+ADD  year_name  VARCHAR(20);                    	-- to add new columns
 ----
 ALTER TABLE  table_name 
-RENAME COLUMN  old_name  TO  new_name;        	        -- to rename a column
+RENAME COLUMN  old_name  TO  new_name;        	    -- to rename a column
 ----
 ALTER TABLE  dim_date 
-DROP COLUMN  year_name;	         			         -- to delete a column
+DROP COLUMN  year_name;	         			        -- to delete a column
 ----
 
 -- With TRUNCATE TABLE, we can delete all the rows from a table:
@@ -80,6 +71,8 @@ TRUNCATE TABLE dim_date;
 
 -- With DROP TABLE, we can delete an entire table:
 DROP TABLE dim_date;
+
+ROLLBACK;
 
 -------------------------------------------------------------------
 
@@ -100,6 +93,7 @@ DROP TABLE dim_date;
 -------------------------------------------------------------------
 
 -- CREATE VIEW for saved, reusable query logic: 
+
 CREATE VIEW customer_revenue_summary AS
 SELECT
     c.customer_sk,

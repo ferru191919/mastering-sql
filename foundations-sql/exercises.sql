@@ -651,6 +651,39 @@ SECTION 8 — DATA DEFINITION LANGUAGE
 
 BEGIN TRANSACTION;
 
-CREATE TABLE product_reviews(
-    
-)
+CREATE TABLE product_reviews (
+    review_id   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    product_sk  INTEGER NOT NULL,
+    rating      INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    review_text TEXT,
+    review_date DATE NOT NULL,
+
+    FOREIGN KEY (product_sk) REFERENCES dim_product(product_sk)
+);
+
+ROLLBACK;
+
+-- ---------------------------------------------------------
+-- EXERCISE 22 — Alter a table
+-- Difficulty: Easy / Intermediate
+--
+-- Modify product_reviews.
+--
+-- Add a new column:
+--
+-- verified_purchase
+--
+-- Choose an appropriate data type.
+--
+-- It should default to false.
+
+BEGIN TRANSACTION;
+
+ALTER TABLE product_reviews
+ADD COLUMN verified_purchase BOOLEAN DEFAULT FALSE;
+
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'product_reviews';
+
+ROLLBACK;
