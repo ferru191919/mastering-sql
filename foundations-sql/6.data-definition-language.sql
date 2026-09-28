@@ -8,8 +8,10 @@
 -- Therefore, it's important to know some safety rules before altering your DB.
 -- Include all your DDL queries within BEGIN TRANSACTION and ROLLBACK commands.
 
+
 BEGIN TRANSACTION;   -- A transaction creates a safe area where you can test changes 
                      -- before deciding whether to keep them.
+
 -- Your DDL query ...
 
 ROLLBACK;           -- ROLLBACK cancels everything done after BEGIN TRANSACTION.

@@ -4,7 +4,7 @@
 
 -- SAFETY RULE --
 --
--- Remember to use BEGIN TRANSACTION!
+-- Remember to use BEGIN TRANSACTION when altering your DB records!
 
 
 -- After creating the table, we need to add records to the table:
