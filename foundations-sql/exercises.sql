@@ -739,3 +739,176 @@ DROP TABLE product_reviews;
 
 COMMIT;
 
+
+/*
+============================================================
+SECTION 10 — COMBINED CHALLENGES
+============================================================
+
+These exercises intentionally do NOT tell you exactly which SQL
+features to use.
+
+Work out the solution from the business requirement.
+============================================================
+*/
+
+
+-- ---------------------------------------------------------
+-- EXERCISE 28 — Revenue by country
+-- Difficulty: Intermediate
+--
+-- Management wants to understand which countries generate the
+-- most revenue.
+--
+-- Produce a report containing:
+--
+-- country
+-- unique_customers
+-- total_order_lines
+-- total_quantity_sold
+-- total_revenue
+--
+-- Only include countries whose total revenue is greater than 50.
+--
+-- Sort from highest revenue to lowest.
+-- ---------------------------------------------------------
+
+
+
+
+
+-- ---------------------------------------------------------
+-- EXERCISE 29 — Category performance
+-- Difficulty: Intermediate
+--
+-- Produce a report for product categories.
+--
+-- Display:
+--
+-- category
+-- number_of_products_sold
+-- total_units_sold
+-- total_revenue
+-- average_revenue_per_order_line
+--
+-- Only include products that have actually been ordered.
+--
+-- Sort by total_revenue descending.
+-- ---------------------------------------------------------
+
+
+
+
+
+-- ---------------------------------------------------------
+-- EXERCISE 30 — Discount analysis
+-- Difficulty: Intermediate
+--
+-- Divide order lines into two groups:
+--
+-- 'Discounted'
+-- 'Full Price'
+--
+-- An order line is discounted when discount_amount is greater
+-- than zero.
+--
+-- For each group calculate:
+--
+-- number_of_order_lines
+-- total_quantity
+-- total_revenue
+-- average_revenue
+--
+-- Do not manually write separate queries for the two groups.
+-- ---------------------------------------------------------
+
+
+
+
+
+-- ---------------------------------------------------------
+-- EXERCISE 31 — Customer segment report
+-- Difficulty: Intermediate / Challenging
+--
+-- For each customer segment, calculate:
+--
+-- number_of_customers_who_ordered
+-- number_of_orders
+-- total_quantity
+-- total_revenue
+--
+-- Important:
+--
+-- fact_order contains one row per ORDER LINE, not necessarily
+-- one row per order.
+--
+-- Make sure the number of orders counts actual orders rather
+-- than order lines.
+--
+-- Sort by total_revenue descending.
+-- ---------------------------------------------------------
+
+
+
+
+
+-- ---------------------------------------------------------
+-- EXERCISE 32 — Best-selling products
+-- Difficulty: Challenging
+--
+-- Find products that have sold at least 3 units in total.
+--
+-- Display:
+--
+-- product_name
+-- category
+-- brand
+-- total_quantity_sold
+-- total_revenue
+--
+-- Sort by:
+--
+-- 1. total_quantity_sold descending
+-- 2. total_revenue descending
+-- ---------------------------------------------------------
+
+
+
+
+
+-- ---------------------------------------------------------
+-- EXERCISE 33 — Customer activity overview
+-- Difficulty: Challenging
+--
+-- Produce ONE report containing every customer.
+--
+-- Display:
+--
+-- customer_id
+-- customer_name
+-- country
+-- segment
+-- number_of_orders
+-- total_quantity
+-- total_spent
+-- activity_status
+--
+-- activity_status should be:
+--
+-- 'Active'
+--     if the customer has at least one order
+--
+-- 'No Orders'
+--     otherwise
+--
+-- Customers with no orders must show:
+--
+-- number_of_orders = 0
+-- total_quantity   = 0
+-- total_spent      = 0
+--
+-- Sort:
+--
+-- active customers first, ordered by total_spent descending,
+-- followed by customers with no orders.
+-- ---------------------------------------------------------
