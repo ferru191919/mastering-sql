@@ -2,9 +2,11 @@
 --                                    objects (e.g. INSERT, RETRIEVE, MODIFY, etc...).
 
 
--- SAFETY RULE --
+-- SAFETY RULES --
 --
--- Remember to use BEGIN TRANSACTION when altering your DB records!
+-- When you commit DB changes, there's no undo command.
+-- Therefore, it's important to know some safety rules before altering your DB.
+-- BEGIN TRANSACTION and ROLLBACK commands!
 
 
 -- After creating the table, we need to add records to the table:

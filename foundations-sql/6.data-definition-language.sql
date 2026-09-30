@@ -6,7 +6,7 @@
 --
 -- When you commit DB changes, there's no undo command.
 -- Therefore, it's important to know some safety rules before altering your DB.
--- Include all your DDL queries within BEGIN TRANSACTION and ROLLBACK commands.
+-- BEGIN TRANSACTION and ROLLBACK / COMMIT commands!
 
 
 BEGIN TRANSACTION;   -- A transaction creates a safe area where you can test changes 
@@ -15,6 +15,8 @@ BEGIN TRANSACTION;   -- A transaction creates a safe area where you can test cha
 -- Your DDL query ...
 
 ROLLBACK;           -- ROLLBACK cancels everything done after BEGIN TRANSACTION.
+
+COMMIT;             -- COMMIT actually commits your query;
 
 ------------------------------------------
 
@@ -34,6 +36,8 @@ CREATE TABLE dim_date (
     verified_date BOOLEAN DEFAULT TRUE    
 );
 
+COMMIT;
+
 -- When creating the table, we need to define CONSTRAINTS:
 --                  - PIMARY KEY
 --                  - NOT NULL
@@ -41,8 +45,10 @@ CREATE TABLE dim_date (
 --                  - FOREIGN KEY
 --                  - CHECK()
 
-CREATE TABLE fact_order IF NOT EXISTS (    
-    order_id        INTEGER GENERATED ALWAYS AS IDENTITY, -- auto generated
+BEGIN TRANSACTION;
+
+CREATE TABLE IF NOT EXISTS fact_order (    
+    order_id        INTEGER NOT NULL,
     order_date      DATE NOT NULL,
     customer_sk     INTEGER NOT NULL,
     product_sk      INTEGER NOT NULL,
@@ -51,11 +57,22 @@ CREATE TABLE fact_order IF NOT EXISTS (
     order_year      INTEGER,
     order_month     TEXT,
     discount_amount NUMERIC(10,2),
-    net_amount      NUMERIC(10,2),           
+    net_amount      NUMERIC(10,2),
+               
     PRIMARY KEY (order_id, customer_sk, product_sk),
     FOREIGN KEY (customer_sk) REFERENCES dim_customer(customer_sk),
     FOREIGN KEY (product_sk)  REFERENCES dim_product(product_sk)
 );
+
+SELECT column_name, data_type, column_default  -- to check the table created or updated with TRANSACTION.
+FROM information_schema.columns
+WHERE table_name = 'fact_order';
+
+ROLLBACK;
+
+------------------
+
+BEGIN TRANSACTION;
 
 -- With “ALTER TABLE”, we can change the structure of a column:
 ALTER TABLE  dim_date
@@ -74,7 +91,7 @@ TRUNCATE TABLE dim_date;
 -- With DROP TABLE, we can delete an entire table:
 DROP TABLE dim_date;
 
-ROLLBACK;
+COMMIT;
 
 -------------------------------------------------------------------
 

@@ -652,16 +652,21 @@ SECTION 8 — DATA DEFINITION LANGUAGE
 BEGIN TRANSACTION;
 
 CREATE TABLE product_reviews (
-    review_id   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    review_id   INTEGER GENERATED ALWAYS AS IDENTITY,
     product_sk  INTEGER NOT NULL,
     rating      INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
     review_text TEXT,
     review_date DATE NOT NULL,
 
+    PRIMARY KEY (review_id),
     FOREIGN KEY (product_sk) REFERENCES dim_product(product_sk)
 );
 
-ROLLBACK;
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'product_reviews';
+
+COMMIT;
 
 -- ---------------------------------------------------------
 -- EXERCISE 22 — Alter a table
@@ -686,4 +691,51 @@ SELECT column_name, data_type, column_default
 FROM information_schema.columns
 WHERE table_name = 'product_reviews';
 
-ROLLBACK;
+ALTER TABLE product_reviews
+DROP COLUMN verified_purchase;
+
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'product_reviews';
+
+COMMIT;
+
+-- ---------------------------------------------------------
+-- EXERCISE 23 — Insert valid data
+-- Difficulty: Intermediate
+--
+-- Insert at least three reviews into product_reviews.
+--
+-- Use product_sk values that actually exist in dim_product.
+--
+-- Use different ratings and review dates.
+--
+-- Then display all reviews.
+
+BEGIN TRANSACTION;
+
+INSERT INTO product_reviews (product_sk, rating, review_date, review_text)
+VALUES
+    (1, 3, '2026-09-09', 'Nice but too long'),
+    (2, 1, '2026-11-08', 'Horrible'),
+    (3, 5, '2026-12-07', 'My favourite movie!');
+
+SELECT *
+FROM product_reviews;
+
+COMMIT;
+
+-- ---------------------------------------------------------
+-- EXERCISE 25 — Cleanup
+-- Difficulty: Easy
+--
+-- Delete the practice table product_reviews entirely.
+--
+-- Use the appropriate DDL statement.
+
+BEGIN TRANSACTION;
+
+DROP TABLE product_reviews;
+
+COMMIT;
+
