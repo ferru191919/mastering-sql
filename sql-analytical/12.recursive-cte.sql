@@ -51,4 +51,3 @@ WITH RECURSIVE employee_hierarchy AS (
 
 SELECT *
 FROM employee_hierarchy;
-

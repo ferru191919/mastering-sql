@@ -36,3 +36,4 @@ WHERE Expensive <= 3;
 SELECT order_id, product_sk, amount AS order_total_per_product, 
         SUM(amount) OVER (PARTITION BY order_id) AS global_order_total
 FROM fact_order;
+
